@@ -1,0 +1,13 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  xcoord: 1
+  ycoord: 1
+  image: 
+  board_id: 
+
+two:
+  xcoord: 1
+  ycoord: 1
+  image: 
+  board_id: 
