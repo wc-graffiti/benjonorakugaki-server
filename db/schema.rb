@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150819141835) do
+ActiveRecord::Schema.define(version: 20150820150800) do
 
   create_table "boards", force: true do |t|
     t.integer  "width"
@@ -26,8 +26,8 @@ ActiveRecord::Schema.define(version: 20150819141835) do
   create_table "posts", force: true do |t|
     t.integer  "xcoord"
     t.integer  "ycoord"
-    t.binary   "image"
     t.integer  "board_id"
+    t.string   "image_url"
     t.datetime "created_at"
     t.datetime "updated_at"
   end

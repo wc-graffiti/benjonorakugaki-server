@@ -1,11 +1,11 @@
 # Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
-one:
+test:
   lat: 10.00
   lon: 10.00
   name: TestPlace
 
-two:
+akashi:
   lat: 135.00
   lon: 35.00
   name: Akashi-poi

@@ -16,28 +16,38 @@ class WcgAPI < Grape::API
         degree = acc / (60 * 31)
         Spot.where(lat: (lat-degree)..(lat+degree), lon:(lon-degree)..(lon+degree))
       end
+
       def not_found_error
         error!("404 Not Found", 404)
       end
+
+      params :coord do
+        requires :lon, type: String
+        requires :lat, type: String
+        optional :acc, type: String, default: "50"
+      end
+
     end
 
+    desc 'GET /api/v1/spot/?lat=xxx&lon=yyy&acc=zzz'
     params do
-      requires :lon, type: String
-      requires :lat, type: String
-      requires :acc, type: String
+      use :coord
     end
-
     get do
       if list = search_coord
-        list.to_json
+        list
       else
         not_found_error
       end
     end
 
+    desc 'GET /api/v1/spot/:lat/:lon/:acc'
+    params do
+      use :coord
+    end
     get ":lon/:lat/:acc" do
       if list = search_coord
-        list.to_json
+        list
       else
         not_found_error
       end
@@ -46,6 +56,41 @@ class WcgAPI < Grape::API
   end
 
   resource :board do
+    helpers do
+      def not_found_error
+        error!("404 Not Found", 404)
+      end
+
+    end
+
+    desc 'GET /api/v1/board/?id=xx'
+    params do
+      requires :id, type: Integer
+    end
+    get do
+      board = Board.find_by(spot_id: params[:id])
+      if board
+        board
+      else
+        not_found_error
+      end
+    end
+
+    desc 'GET /api/v1/board/:id'
+    params do
+      requires :id, type: Integer
+    end
+    get ":id" do
+      board = Board.find_by(spot_id: params[:id])
+      if board
+        posts = Post.find_by(board_id: params[:id])
+        posts
+      else
+        not_found_error
+      end
+    end
+
+
 
   end
 end

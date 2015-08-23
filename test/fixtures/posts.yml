@@ -1,13 +1,44 @@
 # Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
-one:
-  xcoord: 1
-  ycoord: 1
-  image: 
-  board_id: 
+test_post_1:
+  xcoord: 0
+  ycoord: 0
+  image_url:
+  board: test_board 
 
-two:
+test_post_2:
+  xcoord: 0
+  ycoord: 0
+  image_url:
+  board: test_board 
+
+akashi_post_1:
   xcoord: 1
   ycoord: 1
-  image: 
-  board_id: 
+  image_url:
+  board: akashi_board 
+
+akashi_post_2:
+  xcoord: 1
+  ycoord: 1
+  image_url:
+  board: akashi_board 
+
+akashi_post_3:
+  xcoord: 1
+  ycoord: 1
+  image_url:
+  board: akashi_board 
+
+akashi_post_4:
+  xcoord: 1
+  ycoord: 1
+  image_url:
+  board: akashi_board 
+
+# akashi_post_5:
+#   xcoord: 1
+#   ycoord: 1
+#   image_url:  !binary |
+# <%=ActiveRecord::Fixture::file 'img/se_025.png' %>
+#   board: akashi_board 

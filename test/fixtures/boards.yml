@@ -1,11 +1,11 @@
 # Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
-one:
-  width: 1
-  height: 1
-  spot_id: 
+test_board:
+  width: 320
+  height: 640
+  spot: test
 
-two:
-  width: 1
-  height: 1
-  spot_id: 
+akashi_board:
+  width: 720
+  height: 1280
+  spot: akashi
