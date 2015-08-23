@@ -3,42 +3,38 @@
 test_post_1:
   xcoord: 0
   ycoord: 0
-  image_url:
+  image: "test_post_1.png"
   board: test_board 
 
 test_post_2:
   xcoord: 0
   ycoord: 0
-  image_url:
+  image:
+  image: "test_post_2.png"
   board: test_board 
 
 akashi_post_1:
   xcoord: 1
   ycoord: 1
-  image_url:
+  image: "akashi_post_1.png"
   board: akashi_board 
 
 akashi_post_2:
   xcoord: 1
   ycoord: 1
-  image_url:
+  image: "akashi_post_2.png"
   board: akashi_board 
 
 akashi_post_3:
   xcoord: 1
   ycoord: 1
-  image_url:
+  image:
+  image: "akashi_post_3.png"
   board: akashi_board 
 
 akashi_post_4:
   xcoord: 1
   ycoord: 1
-  image_url:
+  image: "akashi_post_4.png"
   board: akashi_board 
 
-# akashi_post_5:
-#   xcoord: 1
-#   ycoord: 1
-#   image_url:  !binary |
-# <%=ActiveRecord::Fixture::file 'img/se_025.png' %>
-#   board: akashi_board 
