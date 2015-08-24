@@ -3,7 +3,7 @@ class CreatePosts < ActiveRecord::Migration
     create_table :posts do |t|
       t.integer :xcoord
       t.integer :ycoord
-      t.binary :image
+      t.string :image_url
       t.belongs_to :board, index: true
 
       t.timestamps
