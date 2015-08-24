@@ -13,8 +13,14 @@ class WcgAPI < Grape::API
         lon = params[:lon].to_f
         lat = params[:lat].to_f
         acc = params[:acc].to_f
-        degree = acc / (60 * 31)
-        Spot.where(lat: (lat-degree)..(lat+degree), lon:(lon-degree)..(lon+degree))
+        degree = acc / (60 * 60 * 31)
+        spots = Spot.where(lat: (lat-degree)..(lat+degree), lon:(lon-degree)..(lon+degree))
+        if spots.empty?
+          param = Spot.select("id, ((lat-#{lat})*(lat-#{lat}) + (lon-#{lon})*(lon-#{lon})) AS dis").order("dis").first
+          Spot.where(id: param.id)
+        else
+          spots
+        end
       end
 
       def create_board(id)
@@ -131,7 +137,7 @@ class WcgAPI < Grape::API
           end
           FileUtils.mkdir_p(savepath) unless FileTest.exist?(savepath)
           ret_image.write(imgpath)
-          board = Board.find(spot.board_id)
+          board = Board.find(post.board_id)
           board.board_image.store! File.open(imgpath)
           board.save
         end
@@ -187,8 +193,8 @@ class WcgAPI < Grape::API
         begin
           create_post
           return "succeed"
-        rescue #=> e
-          return "failed"
+        rescue => e
+          return "failed: " + e.message
         end
       else
         not_found_error
@@ -206,8 +212,8 @@ class WcgAPI < Grape::API
         begin
           create_post
           return "suceeed"
-        rescue #=> e
-          return "failed"
+        rescue => e
+          return "failed: " + e.message
         end
       else
         not_found_error

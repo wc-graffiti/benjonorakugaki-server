@@ -16,6 +16,8 @@ gem 'jbuilder', '1.0.2'
 gem 'grape'
 gem 'rmagick', :require => 'RMagick'
 gem 'carrierwave'
+gem 'ruby-filemagic'
+gem 'carrierwave-magic'
 
 group :doc do
   gem 'sdoc', '0.3.20', require: false

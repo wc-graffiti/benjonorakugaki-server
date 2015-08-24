@@ -1,0 +1,4 @@
+[DEPRECATION] requiring "RMagick" is deprecated. Use "rmagick" instead
+[2015-08-24 23:13:38] INFO  WEBrick 1.3.1
+[2015-08-24 23:13:38] INFO  ruby 2.0.0 (2015-04-13) [x86_64-linux]
+[2015-08-24 23:13:38] INFO  WEBrick::HTTPServer#start: pid=29442 port=3000
