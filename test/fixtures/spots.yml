@@ -10,6 +10,11 @@ test2:
   lon: 137.408563
   name: Test-TUT2
 
+test3: 
+  lat: 34.700731
+  lon: 137.409110
+  name: Test-TUT3
+
 akashi:
   lat: 135.00
   lon: 35.00

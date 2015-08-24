@@ -17,6 +17,28 @@ class WcgAPI < Grape::API
         Spot.where(lat: (lat-degree)..(lat+degree), lon:(lon-degree)..(lon+degree))
       end
 
+      def create_board(id)
+        board = Board.create({
+          width: 480,
+          height: 640,
+          spot_id: id,
+        })
+        if board
+          width = board.width
+          height = board.height
+          image = Magick::Image.new(width, height){
+            self.background_color = "#ffffff"
+          }
+          savepath = File.join(Rails.root, "public", "uploads", "board", "board_image", board.id.to_s)
+          imgpath  = File.join(savepath, "board_img.png")
+          FileUtils.mkdir_p(savepath) unless FileTest.exist?(savepath)
+          image.write(imgpath)
+          board.board_image.store! File.open(imgpath)
+          board.save
+        end
+        board
+      end
+
       def not_found_error
         error!("404 Not Found", 404)
       end
@@ -24,7 +46,7 @@ class WcgAPI < Grape::API
       params :coord do
         requires :lon, type: String
         requires :lat, type: String
-        optional :acc, type: String, default: "50"
+        optional :acc, type: String, default: 50.0
       end
     end
 
@@ -40,16 +62,46 @@ class WcgAPI < Grape::API
       end
     end
 
-    desc 'GET /api/v1/spot/:lat/:lon/:acc'
+    desc 'GET /api/v1/spot/:lat/:lon'
     params do
       use :coord
     end
-    get ":lon/:lat/:acc" do
+    get ":lat/:lon" do
       if list = search_coord
         list
       else
         not_found_error
       end
+    end
+
+
+    desc 'GET /api/v1/spot/:lat/:lon/:acc'
+    params do
+      use :coord
+    end
+    get ":lat/:lon/:acc" do
+      if list = search_coord
+        list
+      else
+        not_found_error
+      end
+    end
+
+    desc 'POST /api/v1/spot/'
+    params do
+      requires :lon, type: String
+      requires :lat, type: String
+      requires :name, type: String
+    end
+    post do
+      name = params[:name]
+      spot = Spot.create({
+        lat: params[:lat].to_f,
+        lon: params[:lon].to_f,
+        name: name.force_encoding("UTF-8"),
+      })
+      create_board(spot.id)
+      spot
     end
 
   end # :spot
@@ -60,19 +112,12 @@ class WcgAPI < Grape::API
         error!("404 Not Found", 404)
       end
 
-    end
-
-    desc 'GET /api/v1/board/?id=xx'
-    params do
-      requires :id, type: Integer
-    end
-    get do
-      board = Board.find_by(spot_id: params[:id])
-      if board
-        posts = Post.where(board_id: board.id).order(:updated_at)
-        ret_image = nil
-        posts.each do |post|
-          STDOUT.puts "url = #{post.image.url}"
+      def composition_image(post_id)
+        post = Post.find(post_id)
+        if post
+          savepath = File.join(Rails.root, "public", "uploads", "board", "board_image", post.board_id.to_s)
+          imgpath  = File.join(savepath, "board_img.png")
+          ret_image = Magick::Image.from_blob(File.read(imgpath)).first
           # 画像データを読み込む
           filename = File.join(Rails.root, post.image.url)
           blob = File.read(filename)
@@ -84,12 +129,35 @@ class WcgAPI < Grape::API
           else 
             ret_image = ret_image.composite(tmp_image, 0, 0, Magick::OverCompositeOp)
           end
+          FileUtils.mkdir_p(savepath) unless FileTest.exist?(savepath)
+          ret_image.write(imgpath)
+          board = Board.find(spot.board_id)
+          board.board_image.store! File.open(imgpath)
+          board.save
         end
-        STDOUT.puts savepath = File.join(Rails.root, "public", "uploads", "board", "board_image", board.id.to_s)
-        STDOUT.puts imgpath  = File.join(savepath, "board_img.png")
-        FileUtils.mkdir_p(savepath) unless FileTest.exist?(savepath)
-        ret_image.write(imgpath)
-        board.board_image.store! File.open(imgpath) 
+        post
+      end
+
+      def create_post
+        board = Board.find_by(spot_id: params[:id])
+        post = Post.create!({
+          board_id:   board.id,
+          xcoord:     0,
+          ycoord:     0,
+          image:  params[:image]
+        })
+        composition_image(post.id)
+        post.save
+        post
+      end
+    end
+
+    desc 'GET /api/v1/board/?id=xx'
+    params do
+      requires :id, type: Integer
+    end
+    get do
+      if board = Board.find_by(spot_id: params[:id])
         board
       else
         not_found_error
@@ -101,29 +169,7 @@ class WcgAPI < Grape::API
       requires :id, type: Integer
     end
     get ":id" do
-      board = Board.find_by(spot_id: params[:id])
-      if board
-        posts = Post.where(board_id: board.id).order(:updated_at)
-        ret_image = nil
-        STDOUT.puts posts
-        posts.each do |post|
-          # 画像データを読み込む
-          filename = File.join(Rails.root, post.image.url)
-          blob = File.read(filename)
-          tmp_image = Magick::Image.from_blob(blob).first
-          # imageがnilの場合はimageに代入
-          # imageにすでにobjectが代入されている場合はcompositeを呼び出し画像を重ねる  
-          if (ret_image.nil?)  
-            ret_image = tmp_image
-          else 
-            ret_image = ret_image.composite(tmp_image, 0, 0, Magick::OverCompositeOp)
-          end
-        end
-        savepath = File.join(Rails.root, "public", "uploads", "board", "board_image", board.id.to_s)
-        imgpath  = File.join(savepath, "board_img.png")
-        FileUtils.mkdir_p(savepath) unless FileTest.exist?(savepath)
-        ret_image.write(imgpath)
-        board.board_image.store! File.open(imgpath) 
+      if board = Board.find_by(spot_id: params[:id])
         board
       else
         not_found_error
@@ -139,13 +185,8 @@ class WcgAPI < Grape::API
       board = Board.find_by(spot_id: params[:id])
       if board
         begin
-          Post.create!({
-            board_id:   board.id,
-            xcoord:     0,
-            ycoord:     0,
-            image:  params[:image]
-          })
-          return "suceeed"
+          create_post
+          return "succeed"
         rescue #=> e
           return "failed"
         end
@@ -163,12 +204,7 @@ class WcgAPI < Grape::API
       board = Board.find_by(spot_id: params[:id])
       if board
         begin
-          Post.create!({
-            board_id:   board.id,
-            xcoord:     0,
-            ycoord:     0,
-            image:  params[:image]
-          })
+          create_post
           return "suceeed"
         rescue #=> e
           return "failed"
