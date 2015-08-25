@@ -15,4 +15,5 @@
 /log/*.log
 /tmp
 
-*.png
+/uploads
+/public/uploads/
