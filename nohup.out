@@ -1,0 +1,35 @@
+[DEPRECATION] requiring "RMagick" is deprecated. Use "rmagick" instead
+[2015-08-25 15:11:56] INFO  WEBrick 1.3.1
+[2015-08-25 15:11:56] INFO  ruby 2.0.0 (2015-04-13) [x86_64-linux]
+[2015-08-25 15:11:56] INFO  WEBrick::HTTPServer#start: pid=30005 port=3000
+[2015-08-25 15:12:51] FATAL SignalException: SIGTERM
+	/usr/local/rbenv/versions/2.0.0-p645/lib/ruby/2.0.0/webrick/server.rb:170:in `select'
+	/usr/local/rbenv/versions/2.0.0-p645/lib/ruby/2.0.0/webrick/server.rb:170:in `block in start'
+	/usr/local/rbenv/versions/2.0.0-p645/lib/ruby/2.0.0/webrick/server.rb:32:in `start'
+	/usr/local/rbenv/versions/2.0.0-p645/lib/ruby/2.0.0/webrick/server.rb:160:in `start'
+	/usr/local/rbenv/versions/2.0.0-p645/lib/ruby/gems/2.0.0/gems/rack-1.5.5/lib/rack/handler/webrick.rb:14:in `run'
+	/usr/local/rbenv/versions/2.0.0-p645/lib/ruby/gems/2.0.0/gems/rack-1.5.5/lib/rack/server.rb:264:in `start'
+	/usr/local/rbenv/versions/2.0.0-p645/lib/ruby/gems/2.0.0/gems/railties-4.0.5/lib/rails/commands/server.rb:84:in `start'
+	/usr/local/rbenv/versions/2.0.0-p645/lib/ruby/gems/2.0.0/gems/railties-4.0.5/lib/rails/commands.rb:76:in `block in <top (required)>'
+	/usr/local/rbenv/versions/2.0.0-p645/lib/ruby/gems/2.0.0/gems/railties-4.0.5/lib/rails/commands.rb:71:in `tap'
+	/usr/local/rbenv/versions/2.0.0-p645/lib/ruby/gems/2.0.0/gems/railties-4.0.5/lib/rails/commands.rb:71:in `<top (required)>'
+	bin/rails:4:in `require'
+	bin/rails:4:in `<main>'
+[2015-08-25 15:12:51] INFO  going to shutdown ...
+[2015-08-25 15:12:51] INFO  WEBrick::HTTPServer#start done.
+=> Booting WEBrick
+=> Rails 4.0.5 application starting in development on http://0.0.0.0:3000
+=> Run `rails server -h` for more startup options
+=> Ctrl-C to shutdown server
+
+
+Started GET "/api/v1/spot/?lat=34.7014814&lon=137.4088783&acc=20.0" for 133.15.175.65 at 2015-08-25 15:12:07 +0900
+  [1m[36mActiveRecord::SchemaMigration Load (0.4ms)[0m  [1mSELECT "schema_migrations".* FROM "schema_migrations"[0m
+  [1m[35m (0.3ms)[0m  SELECT COUNT(*) FROM "spots" WHERE ("spots"."lat" BETWEEN 34.70130218853046 AND 34.701660611469535) AND ("spots"."lon" BETWEEN 137.40869908853045 AND 137.40905751146954)
+  [1m[36mSpot Load (0.5ms)[0m  [1mSELECT id, ((lat-34.7014814)*(lat-34.7014814) + (lon-137.4088783)*(lon-137.4088783)) AS dis FROM "spots" ORDER BY dis LIMIT 1[0m
+  [1m[35mSpot Load (0.3ms)[0m  SELECT "spots".* FROM "spots" WHERE "spots"."id" = 2
+
+
+Started GET "/api/v1/board/?id=2" for 133.15.175.65 at 2015-08-25 15:12:17 +0900
+  [1m[36mBoard Load (0.4ms)[0m  [1mSELECT "boards".* FROM "boards" WHERE "boards"."spot_id" = 2 LIMIT 1[0m
+Exiting
