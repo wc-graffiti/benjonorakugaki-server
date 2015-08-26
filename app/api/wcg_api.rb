@@ -141,11 +141,11 @@ class WcgAPI < Grape::API
         error!("404 Not Found", 404)
       end
 
-      def composition_image(_post)
+      def composition_image(_board, _post)
         post = _post
+        board = _board
         if post
-          savepath = File.join(Rails.root, "public", "uploads", "board", "board_image", post.board_id.to_s)
-          imgpath  = File.join(savepath, "board_img.png")
+          imgpath = File.join(Rails.root, board.board_image.url)
           ret_image = Magick::Image.from_blob(File.read(imgpath)).first
           # 画像データを読み込む
           filename = File.join(Rails.root, post.image.url)
@@ -158,9 +158,7 @@ class WcgAPI < Grape::API
           else 
             ret_image = ret_image.composite(tmp_image, 0, 0, Magick::OverCompositeOp)
           end
-          FileUtils.mkdir_p(savepath) unless FileTest.exist?(savepath)
           ret_image.write(imgpath)
-          board = Board.find(post.board_id)
           board.board_image.store! File.open(imgpath)
           board.save
         end
@@ -175,7 +173,7 @@ class WcgAPI < Grape::API
           ycoord:     0,
           image:  params[:image]
         })
-        composition_image(post)
+        composition_image(board, post)
         post.save
         post
       end
