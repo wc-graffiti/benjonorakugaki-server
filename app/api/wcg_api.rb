@@ -7,6 +7,26 @@ class WcgAPI < Grape::API
 
   format :json #これでJSONをやり取りできるようにする
 
+
+  # 例外ハンドル 404
+  rescue_from ActiveRecord::RecordNotFound do |e|
+    rack_response({ message: e.message, status: 404 }.to_json, 404)
+  end
+
+  # 例外ハンドル 400
+  rescue_from Grape::Exceptions::ValidationErrors do |e|
+    rack_response e.to_json, 400
+  end
+
+  # 例外ハンドル 500
+  rescue_from :all do |e|
+    if Rails.env.development?
+      raise e
+    else
+      error_response(message: "Internal server error", status: 500)
+    end
+  end
+
   resource :spot do
     helpers do
       def search_coord
@@ -50,15 +70,15 @@ class WcgAPI < Grape::API
       end
 
       params :coord do
-        requires :lon, type: String
-        requires :lat, type: String
-        optional :acc, type: String, default: 50.0
+        requires :lon, type: BigDecimal
+        requires :lat, type: BigDecimal
       end
     end
 
     desc 'GET /api/v1/spot/?lat=xxx&lon=yyy&acc=zzz'
     params do
       use :coord
+      optional :acc, type: String, default: 50.0
     end
     get do
       if list = search_coord
@@ -72,7 +92,7 @@ class WcgAPI < Grape::API
     params do
       use :coord
     end
-    get ":lat/:lon" do
+    get ":lat/:lon", requirements: { lat: /[^\/]+/, lon: /[^\/]+/,} do
       if list = search_coord
         list
       else
@@ -84,8 +104,9 @@ class WcgAPI < Grape::API
     desc 'GET /api/v1/spot/:lat/:lon/:acc'
     params do
       use :coord
+      optional :acc, type: String, default: 50.0
     end
-    get ":lat/:lon/:acc" do
+    get ":lat/:lon/:acc", requirements: { lat: /[^\/]+/, lon: /[^\/]+/, acc: /[^\/]+/ } do
       if list = search_coord
         list
       else
@@ -95,8 +116,7 @@ class WcgAPI < Grape::API
 
     desc 'POST /api/v1/spot/'
     params do
-      requires :lon, type: String
-      requires :lat, type: String
+      use :coord
       requires :name, type: String
     end
     post do
