@@ -37,7 +37,11 @@ class WcgAPI < Grape::API
         spots = Spot.where(lat: (lat-degree)..(lat+degree), lon:(lon-degree)..(lon+degree))
         if spots.empty?
           param = Spot.select("id, ((lat-#{lat})*(lat-#{lat}) + (lon-#{lon})*(lon-#{lon})) AS dis").order("dis").first
-          Spot.where(id: param.id)
+          if param.nil?
+            nil
+          else
+            Spot.where(id: param.id)
+          end
         else
           spots
         end
