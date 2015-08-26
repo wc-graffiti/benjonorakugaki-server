@@ -56,14 +56,13 @@ class WcgAPI < Grape::API
         if board
           width = board.width
           height = board.height
+          # 白地画像
           image = Magick::Image.new(width, height){
-            self.background_color = "#ffffff"
+            self.background_color = "#FFFFFF"
           }
-          savepath = File.join(Rails.root, "public", "uploads", "board", "board_image", board.id.to_s)
-          imgpath  = File.join(savepath, "board_img.png")
-          FileUtils.mkdir_p(savepath) unless FileTest.exist?(savepath)
-          image.write(imgpath)
-          board.board_image.store! File.open(imgpath)
+          path = Rails.root.join("tmp","board.png")
+          image.write(path)
+          board.board_image.store! File.open(path)
           board.save
         end
         board
@@ -142,8 +141,8 @@ class WcgAPI < Grape::API
         error!("404 Not Found", 404)
       end
 
-      def composition_image(post_id)
-        post = Post.find(post_id)
+      def composition_image(_post)
+        post = _post
         if post
           savepath = File.join(Rails.root, "public", "uploads", "board", "board_image", post.board_id.to_s)
           imgpath  = File.join(savepath, "board_img.png")
@@ -176,7 +175,7 @@ class WcgAPI < Grape::API
           ycoord:     0,
           image:  params[:image]
         })
-        composition_image(post.id)
+        composition_image(post)
         post.save
         post
       end
