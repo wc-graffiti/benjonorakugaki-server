@@ -4,7 +4,6 @@ ruby '2.0.0'
 
 gem 'rails', '4.0.5'
 
-gem 'sqlite3', '1.3.8'
 
 gem 'therubyracer', platforms: :ruby
 gem 'sass-rails', '4.0.5'
@@ -18,6 +17,18 @@ gem 'rmagick', :require => 'RMagick'
 gem 'carrierwave'
 gem 'ruby-filemagic'
 gem 'carrierwave-magic'
+
+# Database gem
+# develop, test => SQLite
+# production    => PostgreSQL
+group :development, :test do
+  gem 'sqlite3', '1.3.8'
+end
+
+group :production do
+  gem 'pg', '0.15.1'  
+  gem 'unicorn'
+end
 
 group :doc do
   gem 'sdoc', '0.3.20', require: false

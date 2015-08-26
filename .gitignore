@@ -15,5 +15,28 @@
 /log/*.log
 /tmp
 
+### Vim ###
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+*.un~
+Session.vim
+.netrwhist
+*~
+
+### Linux ###
+*~
+
+# KDE directory preferences
+.directory
+
+# Linux trash folder which might appear on any partition or disk
+.Trash-*
+
+
+# User Settings
 /uploads
 /public/uploads/
+
+nohup.out
+
+
