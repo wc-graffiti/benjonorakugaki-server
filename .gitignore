@@ -7,6 +7,12 @@
 # Ignore bundler config.
 /.bundle
 
+# Ignore bundler gems.
+vendor/bundle
+
+# Ignore local asset pipline cache files
+/public/assets
+
 # Ignore the default SQLite database.
 /db/*.sqlite3
 /db/*.sqlite3-journal
