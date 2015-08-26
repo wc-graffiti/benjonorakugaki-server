@@ -37,7 +37,11 @@ class WcgAPI < Grape::API
         spots = Spot.where(lat: (lat-degree)..(lat+degree), lon:(lon-degree)..(lon+degree))
         if spots.empty?
           param = Spot.select("id, ((lat-#{lat})*(lat-#{lat}) + (lon-#{lon})*(lon-#{lon})) AS dis").order("dis").first
-          Spot.where(id: param.id)
+          if param.nil?
+            nil
+          else
+            Spot.where(id: param.id)
+          end
         else
           spots
         end
@@ -52,14 +56,13 @@ class WcgAPI < Grape::API
         if board
           width = board.width
           height = board.height
+          # 白地画像
           image = Magick::Image.new(width, height){
-            self.background_color = "#ffffff"
+            self.background_color = "#FFFFFF"
           }
-          savepath = File.join(Rails.root, "public", "uploads", "board", "board_image", board.id.to_s)
-          imgpath  = File.join(savepath, "board_img.png")
-          FileUtils.mkdir_p(savepath) unless FileTest.exist?(savepath)
-          image.write(imgpath)
-          board.board_image.store! File.open(imgpath)
+          path = Rails.root.join("tmp","board.png")
+          image.write(path)
+          board.board_image.store! File.open(path)
           board.save
         end
         board
@@ -138,11 +141,11 @@ class WcgAPI < Grape::API
         error!("404 Not Found", 404)
       end
 
-      def composition_image(post_id)
-        post = Post.find(post_id)
+      def composition_image(_board, _post)
+        post = _post
+        board = _board
         if post
-          savepath = File.join(Rails.root, "public", "uploads", "board", "board_image", post.board_id.to_s)
-          imgpath  = File.join(savepath, "board_img.png")
+          imgpath = File.join(Rails.root, board.board_image.url)
           ret_image = Magick::Image.from_blob(File.read(imgpath)).first
           # 画像データを読み込む
           filename = File.join(Rails.root, post.image.url)
@@ -155,9 +158,7 @@ class WcgAPI < Grape::API
           else 
             ret_image = ret_image.composite(tmp_image, 0, 0, Magick::OverCompositeOp)
           end
-          FileUtils.mkdir_p(savepath) unless FileTest.exist?(savepath)
           ret_image.write(imgpath)
-          board = Board.find(post.board_id)
           board.board_image.store! File.open(imgpath)
           board.save
         end
@@ -172,7 +173,7 @@ class WcgAPI < Grape::API
           ycoord:     0,
           image:  params[:image]
         })
-        composition_image(post.id)
+        composition_image(board, post)
         post.save
         post
       end
