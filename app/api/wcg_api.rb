@@ -141,9 +141,7 @@ class WcgAPI < Grape::API
         error!("404 Not Found", 404)
       end
 
-      def composition_image(_board, _post)
-        post = _post
-        board = _board
+      def composition_image(board, post)
         if post
           imgpath = File.join(Rails.root, board.board_image.url)
           ret_image = Magick::Image.from_blob(File.read(imgpath)).first
@@ -160,7 +158,7 @@ class WcgAPI < Grape::API
           end
           ret_image.write(imgpath)
           board.board_image.store! File.open(imgpath)
-          board.save
+          board.save!
         end
         post
       end
@@ -185,7 +183,11 @@ class WcgAPI < Grape::API
     end
     get do
       if board = Board.find_by(spot_id: params[:id])
-        board
+        filepath = board.board_image.current_path
+        content_type "application/octet-stream"
+        header['Content-Disposition'] = "attachment; filename=board_img.png"
+        env['api.format'] = :binary
+        File.open(filepath).read
       else
         not_found_error
       end
@@ -197,7 +199,11 @@ class WcgAPI < Grape::API
     end
     get ":id" do
       if board = Board.find_by(spot_id: params[:id])
-        board
+        filepath = board.board_image.current_path
+        content_type "application/octet-stream"
+        header['Content-Disposition'] = "attachment; filename=board_img.png"
+        env['api.format'] = :binary
+        File.open(filepath).read
       else
         not_found_error
       end
