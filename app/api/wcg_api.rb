@@ -54,14 +54,8 @@ class WcgAPI < Grape::API
           spot_id: id,
         })
         if board
-          width = board.width
-          height = board.height
-          # 白地画像
-          image = Magick::Image.new(width, height){
-            self.background_color = "#FFFFFF"
-          }
-          path = Rails.root.join("tmp","board.png")
-          image.write(path)
+          num = rand(6) + 1
+          path = Rails.root.join("app", "assets", "images", "wall", num.to_s + ".png")
           board.board_image.store! File.open(path)
           board.save
         end
