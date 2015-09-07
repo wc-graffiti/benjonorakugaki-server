@@ -6,7 +6,9 @@ class WcgAPI < Grape::API
   version 'v1', using: :path
 
   format :json #これでJSONをやり取りできるようにする
-
+  
+  BOARD_WIDTH = 480
+  BOARD_HEIGHT = 640
 
   # 例外ハンドル 404
   rescue_from ActiveRecord::RecordNotFound do |e|
@@ -49,8 +51,8 @@ class WcgAPI < Grape::API
 
       def create_board(id)
         board = Board.create({
-          width: 480,
-          height: 640,
+          width: BOARD_WIDTH,
+          height: BOARD_HEIGHT,
           spot_id: id,
         })
         if board
@@ -135,9 +137,7 @@ class WcgAPI < Grape::API
         error!("404 Not Found", 404)
       end
 
-      def composition_image(_board, _post)
-        post = _post
-        board = _board
+      def composition_image(board, post)
         if post
           imgpath = File.join(Rails.root, board.board_image.url)
           ret_image = Magick::Image.from_blob(File.read(imgpath)).first
@@ -154,9 +154,40 @@ class WcgAPI < Grape::API
           end
           ret_image.write(imgpath)
           board.board_image.store! File.open(imgpath)
-          board.save
+          board.save!
         end
         post
+      end
+
+      def draw_path
+        num = params[:pathnum].to_i if params[:pathnum].present?
+        i = 0
+        width = params[:width]
+        height = params[:height]
+        canvas = Magick::Image.new(width, height){self.background_color = 'none'}
+        dr = Magick::Draw.new
+        dr.stroke_antialias(true)   # アンチエイリアスON
+        dr.stroke_width(6)          # ストローク幅6pt
+        dr.stroke_linecap('round')  # 線の両端を丸める 
+        dr.stroke_linejoin('round') # 角も丸める
+        dr.fill_opacity(0)
+        loop do
+          p = ("path" + i.to_s).to_sym
+          break if i == num or params[p].blank?
+          array = params[p].gsub(/[\[\]]/,"").split(",")
+          color = "#" + (array.shift.to_i&"FFFFFF".hex).to_s(16).rjust(6, '0')
+          STDOUT.puts color
+          dr.stroke(color)
+          a = array.shift.split(" ")
+          array.each do |elem|
+            b = elem.split(" ")
+            dr.line(a[0].to_f, a[1].to_f, b[0].to_f, b[1].to_f)
+            a = b
+          end
+          i += 1
+        end
+        dr.draw(canvas)
+        canvas.resize(BOARD_WIDTH, BOARD_HEIGHT).write('tmp/post.png')
       end
 
       def create_post
@@ -164,9 +195,9 @@ class WcgAPI < Grape::API
         post = Post.create!({
           board_id:   board.id,
           xcoord:     0,
-          ycoord:     0,
-          image:  params[:image]
+          ycoord:     0
         })
+        post.image.store! File.open('tmp/post.png')
         composition_image(board, post)
         post.save
         post
@@ -179,7 +210,11 @@ class WcgAPI < Grape::API
     end
     get do
       if board = Board.find_by(spot_id: params[:id])
-        board
+        filepath = board.board_image.current_path
+        content_type "application/octet-stream"
+        header['Content-Disposition'] = "attachment; filename=board_img.png"
+        env['api.format'] = :binary
+        File.open(filepath).read
       else
         not_found_error
       end
@@ -191,7 +226,11 @@ class WcgAPI < Grape::API
     end
     get ":id" do
       if board = Board.find_by(spot_id: params[:id])
-        board
+        filepath = board.board_image.current_path
+        content_type "application/octet-stream"
+        header['Content-Disposition'] = "attachment; filename=board_img.png"
+        env['api.format'] = :binary
+        File.open(filepath).read
       else
         not_found_error
       end
@@ -200,15 +239,19 @@ class WcgAPI < Grape::API
     desc 'POST /api/v1/board/'
     params do
       requires :id, type: Integer
-      requires :image, type: Hash
+      requires :width, type: Integer
+      requires :height, type: Integer
+      optional :pathnum, type: Integer
     end
     post do
       board = Board.find_by(spot_id: params[:id])
       if board
         begin
+          draw_path
           create_post
           return "succeed"
         rescue => e
+          STDOUT.puts "failed: " + e.message
           return "failed: " + e.message
         end
       else
@@ -219,12 +262,15 @@ class WcgAPI < Grape::API
     desc 'POST /api/v1/board/:id'
     params do
       requires :id, type: Integer
-      requires :image, type: Hash
+      requires :width, type: Integer
+      requires :height, type: Integer
+      optional :pathnum, type: Integer
     end
     post ':id' do
       board = Board.find_by(spot_id: params[:id])
       if board
         begin
+          draw_path
           create_post
           return "suceeed"
         rescue => e
