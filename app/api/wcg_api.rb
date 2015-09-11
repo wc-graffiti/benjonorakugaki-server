@@ -6,9 +6,12 @@ class WcgAPI < Grape::API
   version 'v1', using: :path
 
   format :json #これでJSONをやり取りできるようにする
+  formatter :json, Grape::Formatter::Jbuilder
   
   BOARD_WIDTH = 480
   BOARD_HEIGHT = 640
+
+  LIMIT = 50
 
   # 例外ハンドル 404
   rescue_from ActiveRecord::RecordNotFound do |e|
@@ -36,13 +39,17 @@ class WcgAPI < Grape::API
         lat = params[:lat].to_f
         acc = params[:acc].to_f
         degree = acc / (60 * 60 * 31)
-        spots = Spot.where(lat: (lat-degree)..(lat+degree), lon:(lon-degree)..(lon+degree))
-        if spots.empty?
-          param = Spot.select("id, ((lat-#{lat})*(lat-#{lat}) + (lon-#{lon})*(lon-#{lon})) AS dis").order("dis").first
-          if param.nil?
+        # 自己位置から近隣(LIMIT)件を取得
+        nears = Spot.select("*,
+                            ((lat-(#{lat}))*(lat-(#{lat})) + (lon-(#{lon}))*(lon-(#{lon}))) AS dis")
+                    .order("dis")
+                    .limit(LIMIT)
+        spots = nears.where(lat: (lat-degree)..(lat+degree), lon:(lon-degree)..(lon+degree))
+        if spots.blank?
+          if nears.blank?
             nil
           else
-            Spot.where(id: param.id)
+            [nears.first]
           end
         else
           spots
@@ -79,9 +86,9 @@ class WcgAPI < Grape::API
       use :coord
       optional :acc, type: String, default: 50.0
     end
-    get do
-      if list = search_coord
-        list
+    get jbuilder: 'get_spots' do
+      if @spots = search_coord
+        @spots
       else
         not_found_error
       end
@@ -91,9 +98,9 @@ class WcgAPI < Grape::API
     params do
       use :coord
     end
-    get ":lat/:lon", requirements: { lat: /[^\/]+/, lon: /[^\/]+/,} do
-      if list = search_coord
-        list
+    get ":lat/:lon", requirements: { lat: /[^\/]+/, lon: /[^\/]+/}, jbuilder: 'get_spots' do
+      if @spots = search_coord
+        @spots
       else
         not_found_error
       end
@@ -105,9 +112,9 @@ class WcgAPI < Grape::API
       use :coord
       optional :acc, type: String, default: 50.0
     end
-    get ":lat/:lon/:acc", requirements: { lat: /[^\/]+/, lon: /[^\/]+/, acc: /[^\/]+/ } do
-      if list = search_coord
-        list
+    get ":lat/:lon/:acc", requirements: { lat: /[^\/]+/, lon: /[^\/]+/, acc: /[^\/]+/}, jbuilder: 'get_spots' do
+      if @spots = search_coord
+        @spots
       else
         not_found_error
       end
@@ -159,45 +166,55 @@ class WcgAPI < Grape::API
         post
       end
 
-      def draw_path
+      def draw_path(img_path)
         num = params[:pathnum].to_i if params[:pathnum].present?
-        i = 0
         width = params[:width]
         height = params[:height]
-        canvas = Magick::Image.new(width, height){self.background_color = 'none'}
+        canvas = Magick::Image.new(BOARD_WIDTH, BOARD_HEIGHT){self.background_color = 'none'}
+
+        x_ratio = BOARD_WIDTH/width.to_f
+        y_ratio = BOARD_HEIGHT/height.to_f
+
+        # ImageMagickの描画インスタンス設定
         dr = Magick::Draw.new
         dr.stroke_antialias(true)   # アンチエイリアスON
         dr.stroke_width(6)          # ストローク幅6pt
         dr.stroke_linecap('round')  # 線の両端を丸める 
         dr.stroke_linejoin('round') # 角も丸める
         dr.fill_opacity(0)
+
+        i = 0
         loop do
           p = ("path" + i.to_s).to_sym
           break if i == num or params[p].blank?
           array = params[p].gsub(/[\[\]]/,"").split(",")
+          # カラーコード生成式
           color = "#" + (array.shift.to_i&"FFFFFF".hex).to_s(16).rjust(6, '0')
-          STDOUT.puts color
           dr.stroke(color)
-          a = array.shift.split(" ")
+          a = array.shift.split(" ").map(&method(:Float))
+          a[0] *= x_ratio
+          a[1] *= y_ratio
           array.each do |elem|
-            b = elem.split(" ")
+            b = elem.split(" ").map(&method(:Float))
+            b[0] *= x_ratio
+            b[1] *= y_ratio
             dr.line(a[0].to_f, a[1].to_f, b[0].to_f, b[1].to_f)
             a = b
           end
           i += 1
         end
         dr.draw(canvas)
-        canvas.resize(BOARD_WIDTH, BOARD_HEIGHT).write('tmp/post.png')
+        canvas.write(img_path)
       end
 
-      def create_post
+      def create_post(img)
         board = Board.find_by(spot_id: params[:id])
         post = Post.create!({
           board_id:   board.id,
           xcoord:     0,
           ycoord:     0
         })
-        post.image.store! File.open('tmp/post.png')
+        post.image.store! File.open(img)
         composition_image(board, post)
         post.save
         post
@@ -247,8 +264,9 @@ class WcgAPI < Grape::API
       board = Board.find_by(spot_id: params[:id])
       if board
         begin
-          draw_path
-          create_post
+          tmp = 'tmp/post.png'
+          draw_path tmp
+          create_post tmp
           return "succeed"
         rescue => e
           STDOUT.puts "failed: " + e.message
@@ -270,8 +288,9 @@ class WcgAPI < Grape::API
       board = Board.find_by(spot_id: params[:id])
       if board
         begin
-          draw_path
-          create_post
+          tmp = 'tmp/post.png'
+          draw_path tmp
+          create_post tmp
           return "suceeed"
         rescue => e
           return "failed: " + e.message

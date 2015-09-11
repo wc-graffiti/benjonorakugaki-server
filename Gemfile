@@ -17,6 +17,7 @@ gem 'rmagick'
 gem 'carrierwave'
 gem 'ruby-filemagic'
 gem 'carrierwave-magic'
+gem 'grape-jbuilder'
 
 # Database gem
 # develop, test => SQLite
