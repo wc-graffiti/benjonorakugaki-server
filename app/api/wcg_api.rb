@@ -267,7 +267,7 @@ class WcgAPI < Grape::API
     desc 'POST /api/v1/board/'
     params do
       requires :id, type: Integer
-      requires :uuid, type: Integer
+      requires :uuid, type: String
       requires :width, type: Integer
       requires :height, type: Integer
       optional :pathnum, type: Integer
@@ -292,7 +292,7 @@ class WcgAPI < Grape::API
     desc 'POST /api/v1/board/:id'
     params do
       requires :id, type: Integer
-      requires :uuid, type: Integer
+      requires :uuid, type: String
       requires :width, type: Integer
       requires :height, type: Integer
       optional :pathnum, type: Integer
