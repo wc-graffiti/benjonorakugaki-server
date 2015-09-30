@@ -57,13 +57,14 @@ class WcgAPI < Grape::API
       end
 
       def create_board(id)
+        num = rand(6) + 1
         board = Board.create({
           width: BOARD_WIDTH,
           height: BOARD_HEIGHT,
           spot_id: id,
+          bg_num:  num,
         })
         if board
-          num = rand(6) + 1
           path = Rails.root.join("app", "assets", "images", "wall", num.to_s + ".png")
           board.board_image.store! File.open(path)
           board.save
@@ -144,26 +145,39 @@ class WcgAPI < Grape::API
         error!("404 Not Found", 404)
       end
 
-      def composition_image(board, post)
-        if post
-          imgpath = File.join(Rails.root, board.board_image.url)
-          ret_image = Magick::Image.from_blob(File.read(imgpath)).first
-          # 画像データを読み込む
+      def update_userboard
+        userboard = UserBoard.find_by(user_id: user.id, board_id: board.id)
+        if userboard.blank?
+          userboard = UserBoard.create({
+            user_id:  user.id,
+            board_id: board.id,
+          })
+        end
+        imgpath = File.join(Rails.root, board.board_image.url)
+        userboard.image.store! File.open(imgpath)
+        userboard.save!
+      end
+
+      def composition_image(board)
+        imgpath = Rails.root.join("app", "assets", "images", "wall", num.to_s + ".png")
+        ret_image = Magick::Image.from_blob(File.read(imgpath)).first
+        posts = Post.where(board_id: board.id).order('created_at DESC').limit(15)
+        # 画像データを読み込む
+        posts.each do |post|
           filename = File.join(Rails.root, post.image.url)
           blob = File.read(filename)
           tmp_image = Magick::Image.from_blob(blob).first
           # imageがnilの場合はimageに代入
           # imageにすでにobjectが代入されている場合はcompositeを呼び出し画像を重ねる  
-          if (ret_image.nil?)  
+          if ret_image.nil?  
             ret_image = tmp_image
           else 
             ret_image = ret_image.composite(tmp_image, 0, 0, Magick::OverCompositeOp)
           end
-          ret_image.write(imgpath)
-          board.board_image.store! File.open(imgpath)
-          board.save!
         end
-        post
+        ret_image.write(imgpath)
+        board.board_image.store! File.open(imgpath)
+        board.save!
       end
 
       def draw_path(img_path)
@@ -227,8 +241,9 @@ class WcgAPI < Grape::API
           ycoord:     0
         })
         post.image.store! File.open(img)
-        composition_image(board, post)
         post.save
+        composition_image(board)
+        update_userboard
         post
       end
     end

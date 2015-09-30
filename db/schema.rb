@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150930132735) do
+ActiveRecord::Schema.define(version: 20150930170301) do
 
   create_table "boards", force: true do |t|
     t.integer  "width"
@@ -20,6 +20,7 @@ ActiveRecord::Schema.define(version: 20150930132735) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.string   "board_image"
+    t.integer  "bg_num"
   end
 
   add_index "boards", ["spot_id"], name: "index_boards_on_spot_id"
@@ -44,6 +45,17 @@ ActiveRecord::Schema.define(version: 20150930132735) do
     t.datetime "created_at"
     t.datetime "updated_at"
   end
+
+  create_table "user_boards", force: true do |t|
+    t.integer  "board_id"
+    t.integer  "user_id"
+    t.string   "image"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "user_boards", ["board_id"], name: "index_user_boards_on_board_id"
+  add_index "user_boards", ["user_id"], name: "index_user_boards_on_user_id"
 
   create_table "users", force: true do |t|
     t.string   "uuid"
