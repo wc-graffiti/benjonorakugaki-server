@@ -35,6 +35,7 @@ ActiveRecord::Schema.define(version: 20150930132735) do
   end
 
   add_index "posts", ["board_id"], name: "index_posts_on_board_id"
+  add_index "posts", ["user_id"], name: "index_posts_on_user_id"
 
   create_table "spots", force: true do |t|
     t.decimal  "lat",        precision: 9, scale: 6
