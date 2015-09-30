@@ -45,4 +45,10 @@ ActiveRecord::Schema.define(version: 20150930132735) do
     t.datetime "updated_at"
   end
 
+  create_table "users", force: true do |t|
+    t.string   "uuid"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
 end
