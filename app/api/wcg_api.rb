@@ -207,10 +207,21 @@ class WcgAPI < Grape::API
         canvas.write(img_path)
       end
 
+      def get_user
+        user = User.find_by(uuid: params[:uuid])
+        if user.blank?
+          user = User.create({
+            uuid: params[:uuid]
+          })
+        end
+      end
+
       def create_post(img)
+        user = get_user
         board = Board.find_by(spot_id: params[:id])
-        post = Post.create!({
+        post = Post.create({
           board_id:   board.id,
+          user_id:    user.id,
           xcoord:     0,
           ycoord:     0
         })
@@ -256,6 +267,7 @@ class WcgAPI < Grape::API
     desc 'POST /api/v1/board/'
     params do
       requires :id, type: Integer
+      requires :uuid, type: Integer
       requires :width, type: Integer
       requires :height, type: Integer
       optional :pathnum, type: Integer
@@ -280,6 +292,7 @@ class WcgAPI < Grape::API
     desc 'POST /api/v1/board/:id'
     params do
       requires :id, type: Integer
+      requires :uuid, type: Integer
       requires :width, type: Integer
       requires :height, type: Integer
       optional :pathnum, type: Integer
