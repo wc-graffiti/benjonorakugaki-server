@@ -11,10 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150823191904) do
-
-  # These are extensions that must be enabled in order to support this database
-  enable_extension "plpgsql"
+ActiveRecord::Schema.define(version: 20150930132735) do
 
   create_table "boards", force: true do |t|
     t.integer  "width"
@@ -25,7 +22,7 @@ ActiveRecord::Schema.define(version: 20150823191904) do
     t.string   "board_image"
   end
 
-  add_index "boards", ["spot_id"], name: "index_boards_on_spot_id", using: :btree
+  add_index "boards", ["spot_id"], name: "index_boards_on_spot_id"
 
   create_table "posts", force: true do |t|
     t.integer  "xcoord"
@@ -34,9 +31,11 @@ ActiveRecord::Schema.define(version: 20150823191904) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.string   "image"
+    t.integer  "user_id"
   end
 
-  add_index "posts", ["board_id"], name: "index_posts_on_board_id", using: :btree
+  add_index "posts", ["board_id"], name: "index_posts_on_board_id"
+  add_index "posts", ["user_id"], name: "index_posts_on_user_id"
 
   create_table "spots", force: true do |t|
     t.decimal  "lat",        precision: 9, scale: 6
