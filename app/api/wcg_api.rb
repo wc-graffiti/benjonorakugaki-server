@@ -214,6 +214,7 @@ class WcgAPI < Grape::API
             uuid: params[:uuid]
           })
         end
+        user
       end
 
       def create_post(img)
