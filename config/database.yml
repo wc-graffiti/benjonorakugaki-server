@@ -22,7 +22,7 @@ production:
   adapter: postgresql
   host: localhost
   encoding: utf8
-  database: wcg_db
+  database: wcg_fest_db
   username: wcgadmin
   password: wcgadmin
   pool: 5

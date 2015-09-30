@@ -31,7 +31,7 @@ namespace :unicorn do
 
   def unicorn_pid
     begin
-      File.read("/tmp/unicorn-wcg.pid").to_i
+      File.read(Rails.root.join("tmp/unicorn-wcg.pid")).to_i
     rescue Errno::ENOENT
       raise "Unicorn doesn't seem to be running"
     end

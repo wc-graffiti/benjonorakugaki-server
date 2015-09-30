@@ -3,8 +3,8 @@ worker_processes Integer(ENV["WEB_CONCURRENCY"] || 3)
 timeout 15
 preload_app true  # 更新時ダウンタイム無し
 
-sock_path = "/tmp/unicorn-wcg.sock"
-pid_path  = "/tmp/unicorn-wcg.pid"
+sock_path = File.expand_path("tmp/unicorn-wcg.sock", ENV['RAILS_ROOT'])
+pid_path  = File.expand_path("tmp/unicorn-wcg.pid", ENV['RAILS_ROOT'])
 
 listen sock_path
 pid pid_path
