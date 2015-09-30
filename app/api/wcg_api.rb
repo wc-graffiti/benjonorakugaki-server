@@ -57,13 +57,14 @@ class WcgAPI < Grape::API
       end
 
       def create_board(id)
+        num = rand(6) + 1
         board = Board.create({
           width: BOARD_WIDTH,
           height: BOARD_HEIGHT,
           spot_id: id,
+          bg_num:  num,
         })
         if board
-          num = rand(6) + 1
           path = Rails.root.join("app", "assets", "images", "wall", num.to_s + ".png")
           board.board_image.store! File.open(path)
           board.save
@@ -144,26 +145,41 @@ class WcgAPI < Grape::API
         error!("404 Not Found", 404)
       end
 
-      def composition_image(board, post)
-        if post
-          imgpath = File.join(Rails.root, board.board_image.url)
-          ret_image = Magick::Image.from_blob(File.read(imgpath)).first
-          # 画像データを読み込む
+      def update_userboard(user, board)
+        imgpath = File.join(Rails.root, board.board_image.url)
+        userboard = UserBoard.find_by(user_id: user.id, board_id: board.id)
+        if userboard.blank?
+          userboard = UserBoard.create({
+            user_id:  user.id,
+            board_id: board.id,
+          })
+        end
+        userboard.image.store! File.open(imgpath)
+        userboard.save!
+        userboard
+      end
+
+      def composition_image(board)
+        imgpath = Rails.root.join("app", "assets", "images", "wall", board.bg_num.to_s + ".png")
+        tmppath = Rails.root.join("tmp", "comp.png")
+        ret_image = Magick::Image.from_blob(File.read(imgpath)).first
+        posts = Post.where(board_id: board.id).order('created_at DESC').limit(15)
+        # 画像データを読み込む
+        posts.each do |post|
           filename = File.join(Rails.root, post.image.url)
           blob = File.read(filename)
           tmp_image = Magick::Image.from_blob(blob).first
           # imageがnilの場合はimageに代入
           # imageにすでにobjectが代入されている場合はcompositeを呼び出し画像を重ねる  
-          if (ret_image.nil?)  
+          if ret_image.blank?  
             ret_image = tmp_image
           else 
             ret_image = ret_image.composite(tmp_image, 0, 0, Magick::OverCompositeOp)
           end
-          ret_image.write(imgpath)
-          board.board_image.store! File.open(imgpath)
-          board.save!
         end
-        post
+        ret_image.write(tmppath)
+        board.board_image.store! File.open(tmppath)
+        board.save!
       end
 
       def draw_path(img_path)
@@ -227,8 +243,9 @@ class WcgAPI < Grape::API
           ycoord:     0
         })
         post.image.store! File.open(img)
-        composition_image(board, post)
         post.save
+        composition_image(board)
+        update_userboard user,board
         post
       end
     end
@@ -282,8 +299,8 @@ class WcgAPI < Grape::API
           create_post tmp
           return "succeed"
         rescue => e
-          STDOUT.puts "failed: " + e.message
-          return "failed: " + e.message
+          STDERR.puts "failed: " + e.message
+          error! "failed: " + e.message
         end
       else
         not_found_error
@@ -307,7 +324,54 @@ class WcgAPI < Grape::API
           create_post tmp
           return "suceeed"
         rescue => e
-          return "failed: " + e.message
+          STDERR.puts "failed: " + e.message
+          error! "failed: " + e.message
+        end
+      else
+        not_found_error
+      end
+    end
+  end
+
+  resource :user do
+    helpers do
+      def not_found_error
+        error!("404 Not Found", 404)
+      end
+    end
+
+    desc 'GET /api/v1/user/:uuid'
+    params do
+      requires :uuid,     type: String
+    end
+    get ':uuid', jbuilder: 'show_userboards' do
+      user = User.find_by(uuid: params[:uuid])
+      if user
+      @userboards = UserBoard.where(user_id: user.id)
+      @userboards
+      else
+        not_found_error
+      end
+    end
+
+    desc 'GET /api/v1/user/:uuid/:spot_id'
+    params do
+      requires :uuid,     type: String
+      requires :spot_id,  type: Integer
+    end
+    get ':uuid/:spot_id' do
+      spot = Spot.find(params[:spot_id])
+      user = User.find_by(uuid: params[:uuid])
+      if user and spot
+        userboard = UserBoard.find_by(user_id: user.id, board_id: spot.id)
+        if userboard
+          filepath = userboard.image.current_path
+          content_type "application/octet-stream"
+          header['Content-Disposition'] = "attachment; filename=#{user.uuid}_#{spot.id.to_s}.png"
+          env['api.format'] = :binary
+          File.open(filepath).read
+        else
+          not_found_error
         end
       else
         not_found_error
@@ -315,4 +379,5 @@ class WcgAPI < Grape::API
     end
 
   end
+
 end
