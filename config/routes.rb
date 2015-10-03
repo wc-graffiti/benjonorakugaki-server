@@ -54,6 +54,6 @@ WcgServer::Application.routes.draw do
   #     resources :products
   #   end
   
-  mount WcgAPI => "/api"
+  mount WcgAPI => "/"
 end
 

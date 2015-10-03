@@ -5,30 +5,19 @@ ruby '2.0.0'
 gem 'rails', '4.0.5'
 
 
-gem 'therubyracer'
+gem 'therubyracer', platforms: :ruby
 gem 'sass-rails', '4.0.5'
 gem 'uglifier', '2.1.1'
 gem 'coffee-rails', '4.0.1'
 gem 'jquery-rails', '3.0.4'
 gem 'turbolinks', '1.1.1'
 gem 'jbuilder', '1.0.2'
-
-# ImageMagick
+gem 'grape'
 gem 'rmagick'
 gem 'carrierwave'
 gem 'ruby-filemagic'
 gem 'carrierwave-magic'
-
-# Grape, Jbuilder
-gem 'grape'
 gem 'grape-jbuilder'
-
-# HAML
-gem 'haml-rails'
-
-# Bootstrap
-gem 'less-rails' # Railsでlessを使えるようにする。Bootstrapがlessで書かれているため
-gem 'twitter-bootstrap-rails' # Bootstrapの本体
 
 # Database gem
 # develop, test => SQLite

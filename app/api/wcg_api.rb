@@ -1,4 +1,7 @@
 class WcgAPI < Grape::API
+  # ex)http://localhost:3939/api
+  prefix 'api' #ルートのプレフィックスをつける
+
   # ex)http://localhost:3939/api/v1
   version 'v1', using: :path
 
